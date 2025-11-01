@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {PermissionsAndroid, Platform} from 'react-native';
-import TrackPlayer from 'react-native-track-player';
+import TrackPlayer, {Capability} from 'react-native-track-player';
 import {useLocalTracks} from './useLocalTracks';
 
 export const useTrackPlayerSetup = () => {
@@ -10,7 +10,7 @@ export const useTrackPlayerSetup = () => {
   useEffect(() => {
     const setup = async () => {
       try {
-        // Request permission
+        // 1️⃣ Request permissions (Android)
         if (Platform.OS === 'android') {
           const granted =
             Platform.Version >= 33
@@ -27,12 +27,36 @@ export const useTrackPlayerSetup = () => {
           }
         }
 
-        // Initialize player
+        // 2️⃣ Initialize Track Player
         await TrackPlayer.setupPlayer();
-        await TrackPlayer.updateOptions({stopWithApp: true});
         console.log('✅ Track Player ready');
 
-        // Scan + load tracks
+        // 3️⃣ Configure background capabilities (enables notification controls)
+        await TrackPlayer.updateOptions({
+          stopWithApp: false, // keeps playback active when app is backgrounded
+          alwaysPauseOnInterruption: true,
+          capabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.Stop,
+          ],
+          compactCapabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+          ],
+          notificationCapabilities: [
+            Capability.Play,
+            Capability.Pause,
+            Capability.SkipToNext,
+            Capability.SkipToPrevious,
+            Capability.Stop,
+          ]
+        });
+
+        // 4️⃣ Scan local tracks
         const localTracks = await scanLocalAudio();
         if (localTracks.length === 0) {
           console.warn('⚠️ No music files found.');
@@ -40,16 +64,23 @@ export const useTrackPlayerSetup = () => {
           return;
         }
 
+        // 5️⃣ Load & start playback
         await TrackPlayer.reset();
         await TrackPlayer.add(localTracks);
         await TrackPlayer.play();
         setTracks(localTracks);
+        console.log(`🎶 Loaded ${localTracks.length} tracks`);
       } catch (error) {
         console.error('💥 Error during setup:', error);
       }
     };
 
     setup();
+
+    // Cleanup on unmount
+    return () => {
+      TrackPlayer.destroy();
+    };
   }, [scanLocalAudio]);
 
   return tracks;

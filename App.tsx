@@ -1,35 +1,27 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import TrackPlayer from 'react-native-track-player';
 import {useTrackPlayerSetup} from './src/hooks/useTrackPlayerSetup';
+import {useTrackPlayerEventsLogger} from './src/hooks/useTrackPlayerEvents';
 import {TrackList} from './src/components/TrackList';
-import TrackPlayer, {Event, State, useTrackPlayerEvents} from 'react-native-track-player';
-
-// 🎧 Listen to track player events
-const usePlayerEvents = () => {
-  useTrackPlayerEvents([Event.PlaybackState, Event.PlaybackError], event => {
-    if (event.type === Event.PlaybackState) {
-      console.log('🎧 Playback state:', event.state);
-      if (event.state === State.Playing) console.log('🎵 Now Playing');
-      if (event.state === State.Paused) console.log('⏸️ Paused');
-    } else if (event.type === Event.PlaybackError) {
-      console.error('⚠️ Playback error:', event);
-    }
-  });
-};
+import {PlayerControls} from './src/components/PlayerControls';
+import {NowPlaying} from './src/components/NowPlaying';
 
 const App = () => {
   const tracks = useTrackPlayerSetup();
-  usePlayerEvents();
+  useTrackPlayerEventsLogger();
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>🎵 Offline Music Player</Text>
+      <NowPlaying />
+      <PlayerControls />
       <TrackList tracks={tracks} />
     </View>
   );
 };
 
-TrackPlayer.registerPlaybackService(() => require('./service'));
+TrackPlayer.registerPlaybackService(() => require('./src/services/playerService'));
 export default App;
 
 const styles = StyleSheet.create({
