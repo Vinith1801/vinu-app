@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "musicappV2.app"
-               BlueprintName = "musicappV2"
-               ReferencedContainer = "container:musicappV2.xcodeproj">
+               BuildableName = "vinu.app"
+               BlueprintName = "vinu"
+               ReferencedContainer = "container:vinu.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "musicappV2Tests.xctest"
-               BlueprintName = "musicappV2Tests"
-               ReferencedContainer = "container:musicappV2.xcodeproj">
+               BuildableName = "vinuTests.xctest"
+               BlueprintName = "vinuTests"
+               ReferencedContainer = "container:vinu.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "musicappV2.app"
-            BlueprintName = "musicappV2"
-            ReferencedContainer = "container:musicappV2.xcodeproj">
+            BuildableName = "vinu.app"
+            BlueprintName = "vinu"
+            ReferencedContainer = "container:vinu.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "musicappV2.app"
-            BlueprintName = "musicappV2"
-            ReferencedContainer = "container:musicappV2.xcodeproj">
+            BuildableName = "vinu.app"
+            BlueprintName = "vinu"
+            ReferencedContainer = "container:vinu.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
