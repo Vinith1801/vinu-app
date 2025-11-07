@@ -1,10 +1,12 @@
 import React, {useState} from 'react';
 import {View,Text,StyleSheet,TextInput,TouchableOpacity,Animated,} from 'react-native';
 import {Search, Settings, X} from 'lucide-react-native';
+import {useNavigation} from '@react-navigation/native';
 
 export const Header = ({onSearch}: {onSearch?: (text: string) => void}) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
+    const navigation = useNavigation<any>();
 
   const heightAnim = new Animated.Value(searchVisible ? 90 : 60);
 
@@ -33,8 +35,9 @@ export const Header = ({onSearch}: {onSearch?: (text: string) => void}) => {
             {searchVisible ? <X size={22} color="#fff" /> : <Search size={22} color="#fff" />}
           </TouchableOpacity>
 
-          {/* Settings */}
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SettingsScreen')}
+            style={styles.iconBtn}>
             <Settings size={22} color="#fff" />
           </TouchableOpacity>
         </View>

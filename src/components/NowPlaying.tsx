@@ -8,7 +8,7 @@ import {PlayerControls} from './PlayerControls';
 
 const {height} = Dimensions.get('window');
 const MIN_HEIGHT = 70;
-const MAX_HEIGHT = height * 0.8;
+const MAX_HEIGHT = height * 1.0;
 
 export const NowPlaying = () => {
   const {position, duration} = useProgress(500);

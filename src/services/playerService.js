@@ -1,5 +1,5 @@
 // src/services/playerService.js
-const TrackPlayer = require('react-native-track-player').default;
+ const TrackPlayer = require('react-native-track-player').default;
 const {Event} = require('react-native-track-player');
 
 module.exports = async function () {
@@ -13,5 +13,11 @@ module.exports = async function () {
   TrackPlayer.addEventListener(Event.RemotePrevious, () =>
     TrackPlayer.skipToPrevious().catch(() => console.log('⚠️ No previous track available')),
   );
-  TrackPlayer.addEventListener(Event.RemoteStop, () => TrackPlayer.destroy());
+  TrackPlayer.addEventListener(Event.RemoteStop, () => TrackPlayer.reset());
+  
+  // ✅ Add seek handler
+  TrackPlayer.addEventListener(Event.RemoteSeek, ({position}) => {
+    console.log('⏩ Remote seek to:', position);
+    TrackPlayer.seekTo(position);
+  });
 };

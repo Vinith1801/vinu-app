@@ -46,11 +46,13 @@ export const useTrackPlayerSetup = () => {
         // 3️⃣ Configure background capabilities
         await TrackPlayer.updateOptions({
           alwaysPauseOnInterruption: true,
+          progressUpdateEventInterval: 1,
           capabilities: [
             Capability.Play,
             Capability.Pause,
             Capability.SkipToNext,
             Capability.SkipToPrevious,
+            Capability.SeekTo,
             Capability.Stop,
           ],
           compactCapabilities: [
@@ -63,6 +65,7 @@ export const useTrackPlayerSetup = () => {
             Capability.Pause,
             Capability.SkipToNext,
             Capability.SkipToPrevious,
+            Capability.SeekTo,
             Capability.Stop,
           ],
         });

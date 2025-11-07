@@ -1,25 +1,23 @@
-import React from 'react';
+ import React from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert} from 'react-native';
-import {
-  Moon,
-  Sun,
-  Bell,
-  Info,
-  Shield,
-  Trash2,
-  LogOut,
-  ChevronRight,
-  Music2,
-} from 'lucide-react-native';
+import {Moon,Sun,Bell,Info,Shield,Trash2,LogOut,ChevronRight,Music2,} from 'lucide-react-native';
+import {useNavigation} from '@react-navigation/native';
+import {ArrowLeft} from 'lucide-react-native';
 
 export const SettingsScreen = () => {
   const handlePress = (action: string) => {
     Alert.alert(action, `You tapped on ${action}`);
   };
 
+  const navigation = useNavigation<any>();
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.header}>Settings ⚙️</Text>
+      
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <ArrowLeft size={22} color="#fff" />
+      </TouchableOpacity>
 
       {/* GENERAL SETTINGS */}
       <View style={styles.section}>
@@ -117,9 +115,10 @@ const styles = StyleSheet.create({
   },
   header: {
     color: '#fff',
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
     marginBottom: 20,
+    marginLeft: 40,
   },
   section: {
     marginBottom: 28,
@@ -154,4 +153,10 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 13,
   },
+  backButton: {
+  position: 'absolute',
+  top: 20,
+  left: 16,
+  zIndex: 10,
+},
 });
