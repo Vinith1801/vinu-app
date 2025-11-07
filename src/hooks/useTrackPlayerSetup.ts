@@ -3,6 +3,9 @@ import {PermissionsAndroid, Platform} from 'react-native';
 import TrackPlayer, {Capability} from 'react-native-track-player';
 import {useLocalTracks} from './useLocalTracks';
 
+// Prevent re-initialization across Fast Refresh
+let playerInitialized = false;
+
 export const useTrackPlayerSetup = () => {
   const [tracks, setTracks] = useState<any[]>([]);
   const {scanLocalAudio} = useLocalTracks();
@@ -10,6 +13,14 @@ export const useTrackPlayerSetup = () => {
   useEffect(() => {
     const setup = async () => {
       try {
+        // 🛑 Skip if already initialized
+        if (playerInitialized) {
+          console.log('⚙️ Player already initialized — skipping setup');
+          const existingQueue = await TrackPlayer.getQueue();
+          if (existingQueue.length > 0) setTracks(existingQueue);
+          return;
+        }
+
         // 1️⃣ Request permissions (Android)
         if (Platform.OS === 'android') {
           const granted =
@@ -29,11 +40,11 @@ export const useTrackPlayerSetup = () => {
 
         // 2️⃣ Initialize Track Player
         await TrackPlayer.setupPlayer();
+        playerInitialized = true;
         console.log('✅ Track Player ready');
 
-        // 3️⃣ Configure background capabilities (enables notification controls)
+        // 3️⃣ Configure background capabilities
         await TrackPlayer.updateOptions({
-          stopWithApp: false, // keeps playback active when app is backgrounded
           alwaysPauseOnInterruption: true,
           capabilities: [
             Capability.Play,
@@ -53,12 +64,12 @@ export const useTrackPlayerSetup = () => {
             Capability.SkipToNext,
             Capability.SkipToPrevious,
             Capability.Stop,
-          ]
+          ],
         });
 
         // 4️⃣ Scan local tracks
         const localTracks = await scanLocalAudio();
-        if (localTracks.length === 0) {
+        if (!localTracks || localTracks.length === 0) {
           console.warn('⚠️ No music files found.');
           setTracks([]);
           return;
@@ -77,10 +88,7 @@ export const useTrackPlayerSetup = () => {
 
     setup();
 
-    // Cleanup on unmount
-    return () => {
-      TrackPlayer.destroy();
-    };
+    return () => {};
   }, [scanLocalAudio]);
 
   return tracks;
