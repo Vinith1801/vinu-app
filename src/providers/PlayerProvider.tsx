@@ -1,5 +1,11 @@
+// src/providers/PlayerProvider.tsx
 import React, {createContext, useContext, useEffect, useState} from 'react';
-import TrackPlayer, {Event,State,Track,useTrackPlayerEvents,} from 'react-native-track-player';
+import TrackPlayer, {
+  Event,
+  State,
+  Track,
+  useTrackPlayerEvents,
+} from 'react-native-track-player';
 
 interface PlayerContextType {
   playbackState: State;
@@ -27,12 +33,17 @@ export const PlayerProvider = ({children}: {children: React.ReactNode}) => {
       if (event.type === Event.PlaybackState) {
         const state = event.state;
 
-        // 🚫 Ignore false buffering for local files
+        // 🚫 Ignore short-lived buffering for local files
         if (state === State.Buffering) {
-          const current = await TrackPlayer.getActiveTrack();
-          if (current?.url?.startsWith('file://')) {
-            console.log('⚙️ Ignoring fake buffering (local track)');
-            return;
+          try {
+            const id = await TrackPlayer.getCurrentTrack();
+            const current = id != null ? await TrackPlayer.getTrack(id) : null;
+            if (current?.url?.startsWith('file://')) {
+              console.log('⚙️ Ignoring fake buffering (local track)');
+              return;
+            }
+          } catch (err) {
+            console.warn('⚠️ Buffering check failed:', err);
           }
         }
 
@@ -49,20 +60,16 @@ export const PlayerProvider = ({children}: {children: React.ReactNode}) => {
             console.log('⚠️ Queue sync failed:', err);
           }
         }
-      }
-
-      if (event.type === Event.PlaybackTrackChanged) {
+      } else if (event.type === Event.PlaybackTrackChanged) {
         const nextTrack = await TrackPlayer.getTrack(event.nextTrack);
         setCurrentTrack(nextTrack || null);
-      }
-
-      if (event.type === Event.PlaybackQueueEnded) {
+      } else if (event.type === Event.PlaybackQueueEnded) {
         console.log('🎵 Queue ended');
       }
     },
   );
-  
-  // 📦 Load initial queue safely after setup
+
+  // Initial queue load (retry until initialized)
   useEffect(() => {
     let mounted = true;
     const loadQueueWhenReady = async () => {
@@ -99,7 +106,7 @@ export const PlayerProvider = ({children}: {children: React.ReactNode}) => {
     };
   }, []);
 
-  // 🎮 Playback control helpers
+  // Playback controls
   const play = async () => {
     try {
       await TrackPlayer.play();
@@ -132,7 +139,6 @@ export const PlayerProvider = ({children}: {children: React.ReactNode}) => {
     }
   };
 
-  // 🔁 Skip to a specific track by index
   const skipTo = async (index: number) => {
     try {
       const q = await TrackPlayer.getQueue();
@@ -144,11 +150,13 @@ export const PlayerProvider = ({children}: {children: React.ReactNode}) => {
       await TrackPlayer.skip(index);
       await TrackPlayer.play();
 
-      // Update context
-      const track = await TrackPlayer.getTrack(index);
-      if (track) setCurrentTrack(track);
+      const id = await TrackPlayer.getCurrentTrack();
+      if (id != null) {
+        const track = await TrackPlayer.getTrack(id);
+        setCurrentTrack(track || null);
+      }
 
-      console.log(`🎶 Skipped to: ${track?.title || 'Unknown'}`);
+      console.log(`🎶 Skipped to index: ${index}`);
     } catch (err) {
       console.warn('⚠️ Error skipping to track:', err);
     }
