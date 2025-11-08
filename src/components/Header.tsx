@@ -27,14 +27,17 @@ export const Header = ({onSearch}: {onSearch?: (text: string) => void}) => {
   return (
     <Animated.View style={[styles.container, {height: heightAnim}]}>
       <View style={styles.topRow}>
-        <Text style={styles.title}>🎵 My Library</Text>
+        <Text style={styles.title}>Vinu</Text>
 
         <View style={styles.iconRow}>
           {/* Search Toggle */}
-          <TouchableOpacity onPress={toggleSearch} style={styles.iconBtn}>
-            {searchVisible ? <X size={22} color="#fff" /> : <Search size={22} color="#fff" />}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('SearchScreen')}
+            style={styles.iconBtn}>
+            <Search size={22} color="#fff" />
           </TouchableOpacity>
 
+          {/* Settings Button */}
           <TouchableOpacity
             onPress={() => navigation.navigate('SettingsScreen')}
             style={styles.iconBtn}>

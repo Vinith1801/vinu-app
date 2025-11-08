@@ -9,6 +9,7 @@ import {LibraryScreen} from '../screens/LibraryScreen';
 import {SettingsScreen} from '../screens/SettingsScreen';
 import {NowPlaying} from '../components/NowPlaying';
 import {Header} from '../components/Header';
+import {SearchScreen} from '../screens/SearchScreen';
 
 // Hooks
 import {useSetupTrackPlayer} from '../hooks/useSetupTrackPlayer';
@@ -53,6 +54,7 @@ export const AppNavigator = () => {
             }}>
             <Stack.Screen name="Library" component={LibraryWithPlayer} />
             <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+            <Stack.Screen name="SearchScreen" component={SearchScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </PlayerProvider>
