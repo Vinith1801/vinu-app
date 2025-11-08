@@ -1,31 +1,37 @@
-import React from 'react';
-import {
-  FlatList,
-  Text,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {FlatList,Text,View,StyleSheet,TouchableOpacity,Image,ActivityIndicator} from 'react-native';
 import {Music2, PlayCircle} from 'lucide-react-native';
-import TrackPlayer from 'react-native-track-player';
-
-interface Track {
-  title: string;
-  artist?: string;
-  artwork?: string;
-  url: string;
-}
+import TrackPlayer, {Track} from 'react-native-track-player';
 
 interface TrackListProps {
-  tracks: Track[];
+  tracks?: Track[];
 }
 
 export const TrackList = ({tracks}: TrackListProps) => {
+  const [queue, setQueue] = useState<Track[] | null>(tracks || null);
+  const [loading, setLoading] = useState(!tracks);
+
+  // 🔁 If no tracks prop provided, fetch from TrackPlayer queue
+  useEffect(() => {
+    const fetchQueue = async () => {
+      if (!tracks) {
+        try {
+          const currentQueue = await TrackPlayer.getQueue();
+          setQueue(currentQueue);
+        } catch (err) {
+          console.log('⚠️ Error fetching queue:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchQueue();
+  }, [tracks]);
+
   const handlePlayTrack = async (track: Track, index: number) => {
     try {
       await TrackPlayer.reset();
-      await TrackPlayer.add(tracks);
+      await TrackPlayer.add(queue || []);
       await TrackPlayer.skip(index);
       await TrackPlayer.play();
     } catch (err) {
@@ -33,7 +39,18 @@ export const TrackList = ({tracks}: TrackListProps) => {
     }
   };
 
-  if (!tracks.length) {
+  // 🌀 Loading State
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="small" color="#1DB954" />
+        <Text style={styles.loadingText}>Loading tracks...</Text>
+      </View>
+    );
+  }
+
+  // ⚠️ Empty State
+  if (!queue || queue.length === 0) {
     return <Text style={styles.noMusic}>No music files found.</Text>;
   }
 
@@ -68,7 +85,7 @@ export const TrackList = ({tracks}: TrackListProps) => {
 
   return (
     <FlatList
-      data={tracks}
+      data={queue}
       keyExtractor={(_, i) => i.toString()}
       renderItem={renderItem}
       contentContainerStyle={styles.listContainer}
@@ -122,5 +139,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     fontSize: 15,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
+  loadingText: {
+    color: '#aaa',
+    marginLeft: 10,
   },
 });

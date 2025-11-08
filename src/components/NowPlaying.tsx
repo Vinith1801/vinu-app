@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import {View,Text,StyleSheet,Image,TouchableOpacity,Dimensions,} from 'react-native';
 import TrackPlayer, {useProgress,useActiveTrack,State,usePlaybackState,} from 'react-native-track-player';
-import Animated, {useSharedValue,useAnimatedStyle,withSpring,} from 'react-native-reanimated';
-import {GestureDetector, Gesture} from 'react-native-gesture-handler';
-import {Music2, Pause, Play, Loader2, ChevronUp, ChevronDown} from 'lucide-react-native';
+import Animated, {useSharedValue,useAnimatedStyle,withSpring,runOnJS,} from 'react-native-reanimated';
+import {GestureDetector,Gesture,} from 'react-native-gesture-handler';
+import {Music2,Pause,Play,Loader2,ChevronUp,ChevronDown,} from 'lucide-react-native';
 import {PlayerControls} from './PlayerControls';
 
-const {height} = Dimensions.get('window');
+const {height, width} = Dimensions.get('window');
 const MIN_HEIGHT = 70;
 const MAX_HEIGHT = height * 1.0;
 
@@ -17,6 +17,9 @@ export const NowPlaying = () => {
 
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
+  const [seeking, setSeeking] = useState(false);
+  const [seekPosition, setSeekPosition] = useState(0);
+  const [barWidth, setBarWidth] = useState(width * 0.8);
 
   const translateY = useSharedValue(MAX_HEIGHT - MIN_HEIGHT);
 
@@ -39,13 +42,15 @@ export const NowPlaying = () => {
     return `${minutes}:${seconds}`;
   };
 
-  const progressWidth = duration > 0 ? `${(position / duration) * 100}%` : '0%';
+  const displayedPosition = seeking ? seekPosition : position;
+  const progressWidth =
+    duration > 0 ? `${(displayedPosition / duration) * 100}%` : '0%';
 
   const isPlaying = playbackState === State.Playing;
   const isPaused = playbackState === State.Paused;
   const isLoading = playbackState === State.Buffering;
 
-  // Gesture for expand/collapse
+  // 🔽 Expand/collapse gesture
   const panGesture = Gesture.Pan()
     .onChange(e => {
       translateY.value = Math.max(
@@ -80,11 +85,69 @@ export const NowPlaying = () => {
     );
   };
 
+  const handleSeekEnd = React.useCallback(async (newPos: number) => {
+    try {
+      await TrackPlayer.seekTo(newPos);
+
+      const id = await TrackPlayer.getCurrentTrack();
+      const current = id != null ? await TrackPlayer.getTrack(id) : null;
+
+      if (current?.url?.startsWith('file://')) {
+        setTimeout(async () => {
+          const state = await TrackPlayer.getState();
+          if (state !== State.Playing) await TrackPlayer.play();
+        }, 150);
+      }
+    } catch (err) {
+      console.warn('⚠️ Seek error:', err);
+    }
+  }, []);
+
+  // 🎚️ SEEK GESTURE HANDLER
+  const progressGesture = Gesture.Pan()
+    .onBegin(e => {
+      if (duration <= 0) return;
+      runOnJS(setSeeking)(true);
+      // const newPos = Math.max(0, Math.min(1, e.x / (width * 0.8))) * duration;
+      const newPos = Math.max(0, Math.min(1, e.x / barWidth)) * duration;
+      runOnJS(setSeekPosition)(newPos);
+    })
+    .onChange(e => {
+      if (duration <= 0) return;
+      // const newPos = Math.max(0, Math.min(1, e.x / (width * 0.8))) * duration;
+      const newPos = Math.max(0, Math.min(1, e.x / barWidth)) * duration;
+      
+      runOnJS(setSeekPosition)(newPos);
+    })
+    .onEnd(e => {
+      if (duration <= 0) return;
+      // const newPos = Math.max(0, Math.min(1, e.x / (width * 0.8))) * duration;
+      const newPos = Math.max(0, Math.min(1, e.x / barWidth)) * duration;
+
+      runOnJS(setSeeking)(false);
+
+      runOnJS(handleSeekEnd)(newPos);
+    });
+
+
+    const tapGesture = Gesture.Tap().onEnd(e => {
+    if (duration <= 0) return;
+    // const newPos = Math.max(0, Math.min(1, e.x / (width * 0.8))) * duration;
+    const newPos = Math.max(0, Math.min(1, e.x / barWidth)) * duration;
+    
+    runOnJS(handleSeekEnd)(newPos);
+  });
+
+  const composedGesture = Gesture.Simultaneous(progressGesture, tapGesture);
+
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.playerContainer, animatedStyle]}>
-        {/* Mini Player Header */}
-        <TouchableOpacity style={styles.miniHeader} activeOpacity={0.9} onPress={toggleExpand}>
+        {/* Mini Header */}
+        <TouchableOpacity
+          style={styles.miniHeader}
+          activeOpacity={0.9}
+          onPress={toggleExpand}>
           {translateY.value === 0 ? (
             <ChevronDown color="#fff" />
           ) : (
@@ -109,7 +172,7 @@ export const NowPlaying = () => {
           </TouchableOpacity>
         </TouchableOpacity>
 
-        {/* Expanded Full Player */}
+        {/* Full Player */}
         <View style={styles.fullPlayer}>
           {/* Artwork */}
           <View style={styles.artworkWrapper}>
@@ -132,22 +195,27 @@ export const NowPlaying = () => {
             </Text>
           </View>
 
-          {/* Progress Bar */}
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View style={[styles.progress, {width: progressWidth}]} />
+          {/* SEEKABLE Progress Bar */}
+          <GestureDetector gesture={composedGesture}>
+            <View style={styles.progressContainer}>
+              <View
+                style={styles.progressBar}
+                onLayout={e => setBarWidth(e.nativeEvent.layout.width)}>
+                <View style={[styles.progress, {width: progressWidth}]} />
+              </View>
+              <View style={styles.timeRow}>
+                <Text style={styles.timeText}>
+                  {formatTime(displayedPosition)}
+                </Text>
+                <Text style={styles.timeText}>{formatTime(duration)}</Text>
+              </View>
             </View>
+          </GestureDetector>
 
-            <View style={styles.timeRow}>
-              <Text style={styles.timeText}>{formatTime(position)}</Text>
-              <Text style={styles.timeText}>{formatTime(duration)}</Text>
-            </View>
-          </View>
-
-          {/* Player Controls (your component) */}
+          {/* Controls */}
           <PlayerControls />
 
-          {/* Playback State Text */}
+          {/* State */}
           <View style={styles.stateRow}>
             {isLoading ? (
               <Loader2 size={18} color="#1db954" />
@@ -189,10 +257,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: 'space-between',
   },
-  miniInfo: {
-    flex: 1,
-    marginHorizontal: 12,
-  },
+  miniInfo: {flex: 1, marginHorizontal: 12},
   miniTitle: {color: '#fff', fontSize: 15, fontWeight: '600'},
   miniArtist: {color: '#888', fontSize: 12},
   fullPlayer: {
@@ -219,9 +284,9 @@ const styles = StyleSheet.create({
   artist: {color: '#aaa', fontSize: 14, marginTop: 2},
   progressContainer: {width: '80%', marginTop: 8},
   progressBar: {
-    height: 4,
+    height: 6,
     backgroundColor: '#333',
-    borderRadius: 2,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progress: {height: '100%', backgroundColor: '#1db954'},

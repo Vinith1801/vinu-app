@@ -1,27 +1,41 @@
- import React from 'react';
+import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {View, StyleSheet} from 'react-native';
+import {View, StyleSheet, Text, ActivityIndicator} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 // Screens
+import {LibraryScreen} from '../screens/LibraryScreen';
 import {SettingsScreen} from '../screens/SettingsScreen';
-import {TrackList} from '../components/TrackList';
 import {NowPlaying} from '../components/NowPlaying';
 import {Header} from '../components/Header';
-import {useTrackPlayerSetup} from '../hooks/useTrackPlayerSetup';
+
+// Hooks
+import {useSetupTrackPlayer} from '../hooks/useSetupTrackPlayer';
 import {useTrackPlayerEventsLogger} from '../hooks/useTrackPlayerEvents';
+
+// Provider
+import {PlayerProvider} from '../providers/PlayerProvider';
 
 const Stack = createNativeStackNavigator();
 
-const MainScreen = () => {
-  const tracks = useTrackPlayerSetup();
+const LibraryWithPlayer = () => {
+  const isReady = useSetupTrackPlayer();
   useTrackPlayerEventsLogger();
+
+  if (!isReady) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1DB954" />
+        <Text style={styles.loadingText}>Initializing player...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Header />
-      <TrackList tracks={tracks} />
+      <LibraryScreen />
       <NowPlaying />
     </View>
   );
@@ -30,16 +44,18 @@ const MainScreen = () => {
 export const AppNavigator = () => {
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}>
-          <Stack.Screen name="Main" component={MainScreen} />
-          <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <PlayerProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}>
+            <Stack.Screen name="Library" component={LibraryWithPlayer} />
+            <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </PlayerProvider>
     </GestureHandlerRootView>
   );
 };
@@ -49,5 +65,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#111',
     paddingTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
 });

@@ -6,7 +6,7 @@ export const useLocalTracks = () => {
     const extensions = ['.mp3', '.m4a', '.wav', '.aac', '.flac'];
 
     const dirs = [
-      RNFS.MusicDirectoryPath,
+      RNFS.DocumentDirectoryPath,
       RNFS.DownloadDirectoryPath,
       RNFS.ExternalStorageDirectoryPath
         ? RNFS.ExternalStorageDirectoryPath + '/Music'
